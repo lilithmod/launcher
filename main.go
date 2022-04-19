@@ -120,6 +120,12 @@ func main() {
 		path = ldir + "/" + filename
 	}
 
+	if runtime.GOOS != "windows" {
+		cmd := exec.Command("chmod", "+x", path)
+		err := cmd.Wait()
+		handle(err)
+	}
+
 	deathCount := 0
 	for {
 		if deathCount > 9 {
