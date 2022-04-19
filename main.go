@@ -122,7 +122,7 @@ func main() {
 
 	if runtime.GOOS != "windows" {
 		cmd := exec.Command("chmod", "+x", path)
-		err := cmd.Wait()
+		err := cmd.Run()
 		handle(err)
 	}
 
