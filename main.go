@@ -108,7 +108,7 @@ func main() {
 	path := ""
 	for _, v := range dir {
 		if v.Name() == filename {
-			path = ldir + "\\" + v.Name()
+			path = ldir + "/" + v.Name()
 		}
 	}
 
