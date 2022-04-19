@@ -45,10 +45,10 @@ func main() {
 		Debug: false,
 	}
 
-	err := os.Setenv("HTTP_PROXY", "http://10.177.177.95:3128")
-	handle(err)
-	err = os.Setenv("HTTPS_PROXY", "http://10.177.177.95:3128")
-	handle(err)
+	//err := os.Setenv("HTTP_PROXY", "http://10.177.177.95:3128")
+	//handle(err)
+	//err = os.Setenv("HTTPS_PROXY", "http://10.177.177.95:3128")
+	//handle(err)
 
 	homedir, err := os.UserHomeDir()
 	handle(err)
