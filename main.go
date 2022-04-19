@@ -37,7 +37,7 @@ type launcherConfig struct {
 
 func main() {
 	//println(runtime.GOARCH)
-	println("Lilith Launcher Stable Release 1")
+	println("Lilith Launcher Stable Release 2")
 	println("================================")
 
 	config := launcherConfig{
@@ -129,9 +129,9 @@ func main() {
 		var cmd *exec.Cmd
 		if config.Debug {
 			println("Launching Lilith in debug mode")
-			cmd = exec.Command(path, "--debug")
+			cmd = exec.Command(path, "--dev", "--iknowwhatimdoing")
 		} else {
-			cmd = exec.Command(path)
+			cmd = exec.Command(path, "--iknowwhatimdoing")
 		}
 
 		cmd.Stdout = os.Stdout
