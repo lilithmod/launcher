@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -37,8 +38,10 @@ type launcherConfig struct {
 
 func main() {
 	//println(runtime.GOARCH)
-	println("Lilith Launcher Stable Release 2")
-	println("================================")
+	if !hasArg("--headless") {
+		println("Lilith Launcher Stable Release 3")
+		println("================================")
+	}
 
 	config := launcherConfig{
 		Alpha: false,
@@ -128,7 +131,7 @@ func main() {
 
 	deathCount := 0
 	for {
-		if deathCount > 9 {
+		if deathCount > 4 {
 			println("Relaunched too many times, shutting down...")
 			break
 		}
@@ -144,13 +147,14 @@ func main() {
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			if strings.Contains(err.Error(), "valid Win32 application") {
-				println("Invalid application found, deleting and restarting")
+			if strings.Contains(err.Error(), "valid Win32 application") || strings.Contains(err.Error(), "segmentation") || deathCount == 4 {
+				println("Failed to launch Lilith, deleting...")
 				err := os.Remove(path)
 				handle(err)
-				main()
-			} else {
-				os.Exit(1)
+				path, err := os.Executable()
+				handle(err)
+				err = syscall.Exec(path, []string{os.Args[0], "--headless"}, os.Environ())
+				handle(err)
 			}
 		}
 		deathCount++
@@ -162,6 +166,19 @@ func handle(err error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func hasArg(str string) bool {
+	return isElementExist(os.Args, str)
+}
+
+func isElementExist(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
 
 func DownloadFile(dest string, url string) error {
