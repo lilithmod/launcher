@@ -1,0 +1,602 @@
+import {
+    ScrollView,
+    Switch,
+} from "std-widgets.slint";
+import "./assets/fonts/Outfit-VariableFont_wght.ttf";
+import "./assets/fonts/Inter-VariableFont_opsz,wght.ttf";
+import "./assets/fonts/0xProto-Regular.ttf";
+
+global Palette {
+    out property <color> lilith-hover:#ba2147;
+    out property <color> lilith:#ef2d5b;
+}
+
+export global Config {
+    in-out property <bool> alpha;
+    in-out property <bool> debug;
+}
+
+export enum ProxyState { idle, updating, starting, running }
+component PlayButtonSVGIcon inherits Path {
+    commands: "M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z";
+    fill-rule: evenodd;
+    height: 1.5rem;
+    width: 1.5rem;
+    fill: white;
+}
+
+component StopButtonSVGIcon inherits Path {
+    commands: "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z";
+    fill-rule: evenodd;
+    height: 1.5rem;
+    width: 1.5rem;
+    fill: white;
+}
+
+component LinkEntry {
+    in property <string> text;
+    in property <image> icon;
+
+    callback clicked();
+
+    HorizontalLayout {
+        alignment: start;
+        docs-link-btn := TouchArea {
+            clicked => clicked();
+            mouse-cursor: pointer;
+            HorizontalLayout {
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        colorize: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
+                        height: 1.4rem;
+                        source: icon;
+                        animate colorize {
+                            easing: ease-in-out;
+                            duration: 100ms;
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: text;
+                        font-size: 1.25rem;
+                        color: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
+                        font-family: "Inter";
+                        animate color {
+                            easing: ease-in-out;
+                            duration: 100ms;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component Toggle {
+    out property <bool> selected <=> toggle.selected;
+    in property <string> name;
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        @children
+        VerticalLayout {
+            alignment: center;
+            Text {
+                color: #d4d4d4;
+                text: name;
+            }
+        }
+
+        Rectangle {
+            width: 8px;
+        }
+
+        Rectangle {
+            height: 16px;
+            width: 32px;
+            border-width: 0px;
+            border-radius: 8px;
+            border-color: white;
+            background: toggle.selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
+            toggle := TouchArea {
+                mouse-cursor: pointer;
+
+                out property <bool> selected:true;
+                clicked => {
+                    selected = !selected;
+                }
+            }
+
+            Rectangle {
+                height: 14px;
+                width: 14px;
+                background: white;
+                border-radius: 999px;
+                x: toggle.selected ? parent.width - self.width : 0;
+                animate x {
+                    duration: 100ms;
+                    easing: ease-in-out;
+                }
+            }
+        }
+    }
+}
+
+component LeftToggle {
+    in-out property <bool> selected;
+    in property <string> name;
+
+    callback clicked();
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        alignment: start;
+
+        Rectangle {
+            height: 16px;
+            width: 32px;
+            border-width: 0px;
+            border-radius: 8px;
+            border-color: white;
+            background: selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
+            toggle := TouchArea {
+                mouse-cursor: pointer;
+
+                clicked => {
+                    selected = !selected;
+                    clicked();
+                }
+            }
+
+            Rectangle {
+                height: 14px;
+                width: 14px;
+                background: white;
+                border-radius: 999px;
+                x: selected ? parent.width - self.width : 0;
+                animate x {
+                    duration: 100ms;
+                    easing: ease-in-out;
+                }
+            }
+        }
+
+        Rectangle {
+            width: 8px;
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Text {
+                color: #d4d4d4;
+                text: name;
+            }
+        }
+    }
+}
+
+export component LogsWindow inherits Window {
+    in-out property <string> logs: "";
+    preferred-width: 1160px;
+    preferred-height: 646px;
+    title: "Lilith Logs";
+    public function update-logs(new: string) {
+        logs = logs + new + "\n";
+        if (auto-scroll-toggle.selected) {
+            logs_view.viewport-y = min(0px, - logs_view.viewport-height + logs_view.visible-height);
+        }
+    }
+
+    Image {
+        source: @image-url("./assets/BackgroundImage.png");
+        width: 100%;
+        height: 100%;
+        image-fit: ImageFit.cover;
+    }
+
+    Rectangle {
+        height: 80%;
+        width: 90%;
+        drop-shadow-offset-x: 2px;
+        drop-shadow-offset-y: 2px;
+        drop-shadow-blur: 4px;
+        drop-shadow-spread: 1px;
+        drop-shadow-color: black;
+        border-width: 2px;
+        border-color: #09090b;
+        border-radius: 8px;
+        background: #101013;
+        VerticalLayout {
+            padding-right: 8px;
+            padding-left: 8px;
+            padding-bottom: 8px;
+            logs_view := ScrollView {
+                HorizontalLayout {
+                    alignment: start;
+
+                    Text {
+                        font-family: "0xProto";
+                        text: logs;
+                        color: #d4d4d4;
+                    }
+                }
+            }
+
+            auto-scroll-toggle := Toggle {
+                name: "Auto-Scroll";
+                Rectangle { }
+            }
+        }
+    }
+}
+
+
+component InfoPopup {
+    out property <bool> is-open <=> popup.is-open;
+    in-out property <string> title;
+    // in property <length> height;
+    public function toggle-popup() {
+        popup.is-open ? popup.close() : popup.show();
+    }
+
+    callback closing();
+
+    popup := PopupWindow {
+
+        height: parent.height;
+        width: parent.width;
+
+        close-policy: close-on-click-outside;
+        Rectangle {
+            height: parent.height - 200px;
+            width: parent.width / 4;
+            drop-shadow-offset-x: 2px;
+            drop-shadow-offset-y: 2px;
+            drop-shadow-blur: 4px;
+            drop-shadow-spread: 1px;
+            drop-shadow-color: black;
+            border-width: 2px;
+            border-color: #09090b;
+            border-radius: 8px;
+            background: #202023;
+            opacity: self.visible ? 100% : 0;
+            animate opacity {
+                easing: ease-in-out;
+                duration: 150ms;
+            }
+
+            VerticalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-bottom: 12px;
+
+                alignment: space-between;
+
+                @children
+
+                Rectangle {
+                    close-error-btn := TouchArea {
+                        clicked => {
+                            popup.close();
+                            closing()
+                        }
+                        mouse-cursor: pointer;
+                    }
+
+                    width: 100%;
+                    border-radius: 8px;
+                    border-width: 2px;
+                    border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
+                    background: close-error-btn.has-hover ? Palette.lilith : transparent;
+
+                    animate background, border-color {
+                        easing: ease-in-out;
+                        duration: 100ms;
+                    }
+                    VerticalLayout {
+                        padding-top: 8px;
+                        padding-bottom: 8px;
+                        alignment: center;
+                        cross-axis-alignment: center;
+                        Text {
+                            text: "OK";
+                            color: white;
+                            font-weight: FontWeight.bold;
+                            font-family: "Inter";
+                            font-size: 1.5rem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+export component AppWindow inherits Window {
+
+    property <length> win_width: 1160px;
+    property <length> win_height: 646px;
+
+    in-out property <int> counter: 0;
+    in-out property <ProxyState> proxy-state: idle;
+    in-out property <string> status-text;
+
+    width: win_width;
+    height: win_height;
+
+    no-frame: true;
+    callback start-drag();
+
+    callback request-increase-value();
+
+    callback big-button-clicked();
+
+    callback show-logs-window();
+
+    callback config-popup-closed <=> config-popup.closing;
+
+    callback close-app();
+    callback minimize-app();
+
+    public function toggle-error-popup() {
+        error-popup.toggle-popup();
+    }
+
+    public function toggle-config-popup() {
+        config-popup.toggle-popup();
+    }
+
+    in-out property <string> error-popup-title: "ANNOUNCEMENT";
+    in-out property <styled-text> error-popup-body: @markdown("i love cats they are so cute and fluffy x3");
+
+    Image {
+        source: @image-url("./assets/BackgroundImage.png");
+        width: win_width;
+        height: win_height;
+    }
+
+    HorizontalLayout {
+        z: 67;
+
+        Rectangle {
+
+            height: 50px;
+            TouchArea {
+
+                pointer-event(event) => {
+                    if (event.button == PointerEventButton.left) {
+                        root.start-drag();
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            cross-axis-alignment: center;
+            height: 40px;
+            spacing: 12px;
+            padding-right: 0.5rem;
+            Text {
+                text: "-";
+                font-size: 2.5rem;
+                color: #d4d4d4;
+                minimize-t-area := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => minimize-app();
+                }
+            }
+
+            Text {
+                text: "×";
+                font-size: 2.5rem;
+                color: #d4d4d4;
+                close-t-area := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => close-app();
+                }
+            }
+        }
+    }
+
+    error-popup := InfoPopup {
+        height: win_height;
+        width: win_width;
+
+        VerticalLayout {
+            alignment: center;
+            padding-top: 32px;
+            cross-axis-alignment: start;
+            Text {
+                text: error-popup-title;
+                color: white;
+                font-family: "Inter";
+                font-size: 2rem;
+                font-weight: FontWeight.black;
+            }
+
+            Rectangle {
+                height: 10px;
+            }
+
+            StyledText {
+                text: error-popup-body;
+                default-font-size: 1.25rem;
+                default-color: #d4d4d4;
+                default-font-family: "Inter";
+            }
+        }
+    }
+
+    config-popup := InfoPopup {
+        height: win_height;
+        width: win_width;
+
+        VerticalLayout {
+            alignment: start;
+            padding-top: 32px;
+            HorizontalLayout {
+                cross-axis-alignment: center;
+                alignment: center;
+                Text {
+                    text: "Configuration";
+                    color: white;
+                    font-family: "Inter";
+                    horizontal-alignment: center;
+                    font-size: 2rem;
+                    font-weight: FontWeight.black;
+                }
+            }
+
+            Rectangle {
+                height: 10px;
+            }
+
+            VerticalLayout {
+                cross-axis-alignment: start;
+                spacing: 8px;
+                beta-toggle := LeftToggle {
+                    name: "Beta";
+                    selected <=> Config.alpha;
+                }
+
+                deub-toggle := LeftToggle {
+                    name: "Debug";
+                    selected <=> Config.debug;
+                }
+            }
+        }
+    }
+
+    VerticalLayout {
+
+        alignment: center;
+        padding-left: 8rem;
+        HorizontalLayout {
+            padding: 0px;
+            alignment: start;
+            cross-axis-alignment: end;
+
+            Image {
+                TouchArea {
+                    double-clicked => { toggle-config-popup() }
+                }
+
+                horizontal-alignment: left;
+                source: @image-url("./assets/LilithLogo.png");
+                width: 310px;
+            }
+        }
+
+        Rectangle {
+            private property <bool> active: proxy-state == ProxyState.idle || proxy-state == ProxyState.running;
+            launch-btn := TouchArea {
+                mouse-cursor: active ? pointer : not-allowed;
+                clicked => {
+                    big-button-clicked();
+                };
+            }
+
+            border-color: proxy-state == ProxyState.idle ? rgb(259,99,126) : rgb(161,161,161);
+            border-width: 1px;
+            border-radius: 8px;
+            background: {
+                if (proxy-state == ProxyState.idle) {
+                    return launch-btn.has-hover ? rgba(255, 32, 86, 100%) : rgba(255, 32, 86, 84%);
+                } else {
+                    return rgb(115,115,115);
+                }
+            };
+            width: 186px;
+            height: 50px;
+
+            transform-scale: (!active ? 0 : (!launch-btn.has-hover ? 0 : proxy-state == ProxyState.idle ? 3% : -8%)) + 100%;
+            animate background, width, transform-scale {
+                duration: 300ms;
+                easing: ease-in-out;
+            }
+
+            HorizontalLayout {
+                padding-right: 0.5rem;
+                padding-left: 0.5rem;
+                alignment: center;
+                spacing: 8px;
+
+                VerticalLayout {
+                    alignment: center;
+
+                    Text {
+                        font-size: 2rem;
+                        color: white;
+                        text: {
+                            if (proxy-state == ProxyState.starting) {
+                                return "Starting";
+                            }
+                            if (proxy-state == ProxyState.running) {
+                                return "Stop";
+                            }
+                            if (proxy-state == ProxyState.updating) {
+                                return "Updating";
+                            }
+                            return "Launch";
+                        };
+                        font-family: "Inter";
+                        font-weight: FontWeight.black;
+                    }
+                }
+
+                if proxy-state == ProxyState.idle || proxy-state == ProxyState.running: VerticalLayout {
+                    alignment: center;
+                    if proxy-state == ProxyState.idle: PlayButtonSVGIcon { }
+
+                    if proxy-state == ProxyState.running: StopButtonSVGIcon { }
+                }
+            }
+        }
+
+        VerticalLayout {
+            padding-top: 1rem;
+            spacing: 2px;
+            LinkEntry {
+                text: "Documentation";
+                clicked => {
+                    Platform.open-url("https://docs.lilith.rip");
+                }
+                icon: @image-url("./assets/icons/lucide/docs.svg");
+            }
+
+            LinkEntry {
+                text: "Changelog";
+                clicked => {
+                    Platform.open-url("https://github.com/lilithmod/releases/releases/latest");
+                }
+                icon: @image-url("./assets/icons/lucide/rocket.svg");
+            }
+
+            LinkEntry {
+                text: "Settings";
+                clicked => {
+                    Platform.open-url("https://me.lilith.rip");
+                }
+                icon: @image-url("./assets/icons/lucide/settings.svg");
+            }
+
+            LinkEntry {
+                visible: proxy-state == ProxyState.running;
+                text: "Logs";
+                clicked => show-logs-window();
+                icon: @image-url("./assets/icons/lucide/logs.svg");
+            }
+        }
+    }
+
+    Text {
+        text: status-text;
+        color: #737373;
+        font-size: 1rem;
+        x: 0;
+        y: 00;
+    }
+}

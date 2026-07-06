@@ -1,0 +1,29 @@
+[package]
+name = "slint-rust-template"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-compat = "0.2.5"
+config = "0.15.24"
+cpufeatures = "0.3.0"
+futures = "0.3.32"
+hex = "0.4.3"
+log = {version="0.4.32", features= ["kv"]}
+reqwest = { version = "0.13.4", features = ["json", "stream"] }
+serde = "1.0.228"
+serde_json = "1.0.150"
+sha2 = "0.11.0"
+slint = {version="1.17.0", features=["live-preview", "unstable-winit-030"]}
+tokio = {version="1.52.3", features=["rt", "rt-multi-thread"]}
+dirs = "5.0"
+strip-ansi-escapes = "0.2.1"
+
+[build-dependencies]
+slint-build = "1.17.0"
+
+[profile.release]
+codegen-units = 1
+lto = true
