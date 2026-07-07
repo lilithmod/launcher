@@ -1,0 +1,102 @@
+import { Palette } from "../globals.slint";
+
+export component RightToggle {
+    out property <bool> selected <=> toggle.selected;
+    in property <string> name;
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        @children
+        VerticalLayout {
+            alignment: center;
+            Text {
+                color: #d4d4d4;
+                text: name;
+            }
+        }
+
+        Rectangle {
+            width: 8px;
+        }
+
+        Rectangle {
+            height: 16px;
+            width: 32px;
+            border-width: 0px;
+            border-radius: 8px;
+            border-color: white;
+            background: toggle.selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
+            toggle := TouchArea {
+                mouse-cursor: pointer;
+
+                out property <bool> selected:true;
+                clicked => {
+                    selected = !selected;
+                }
+            }
+
+            Rectangle {
+                height: 14px;
+                width: 14px;
+                background: white;
+                border-radius: 999px;
+                x: toggle.selected ? parent.width - self.width : 0;
+                animate x {
+                    duration: 100ms;
+                    easing: ease-in-out;
+                }
+            }
+        }
+    }
+}
+
+export component Toggle {
+    in-out property <bool> selected;
+    in property <string> name;
+
+    callback clicked();
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        alignment: start;
+
+        Rectangle {
+            height: 16px;
+            width: 32px;
+            border-width: 0px;
+            border-radius: 8px;
+            border-color: white;
+            background: selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
+            toggle := TouchArea {
+                mouse-cursor: pointer;
+
+                clicked => {
+                    selected = !selected;
+                    clicked();
+                }
+            }
+
+            Rectangle {
+                height: 14px;
+                width: 14px;
+                background: white;
+                border-radius: 999px;
+                x: selected ? parent.width - self.width : 0;
+                animate x {
+                    duration: 100ms;
+                    easing: ease-in-out;
+                }
+            }
+        }
+
+        Rectangle {
+            width: 8px;
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Text {
+                color: #d4d4d4;
+                text: name;
+            }
+        }
+    }
+}

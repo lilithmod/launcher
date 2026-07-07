@@ -1,0 +1,44 @@
+import { Palette } from "../globals.slint";
+
+export component LinkEntry {
+    in property <string> text;
+    in property <image> icon;
+
+    callback clicked();
+
+    HorizontalLayout {
+        alignment: start;
+        docs-link-btn := TouchArea {
+            clicked => clicked();
+            mouse-cursor: pointer;
+            HorizontalLayout {
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        colorize: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
+                        height: 1.4rem;
+                        source: icon;
+                        animate colorize {
+                            easing: ease-in-out;
+                            duration: 100ms;
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: text;
+                        font-size: 1.25rem;
+                        color: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
+                        font-family: "Inter";
+                        animate color {
+                            easing: ease-in-out;
+                            duration: 100ms;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

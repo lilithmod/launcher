@@ -1,0 +1,46 @@
+export component DragBar {
+    callback start-drag();
+    callback minimize-app();
+    callback close-app();
+    HorizontalLayout {
+        z: 67;
+        Rectangle {
+
+            height: 50px;
+            TouchArea {
+
+                pointer-event(event) => {
+                    if (event.button == PointerEventButton.left) {
+                        start-drag();
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            cross-axis-alignment: center;
+            height: 40px;
+            spacing: 12px;
+            padding-right: 0.5rem;
+            Text {
+                text: "-";
+                font-size: 2.5rem;
+                color: #d4d4d4;
+                minimize-t-area := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => minimize-app();
+                }
+            }
+
+            Text {
+                text: "×";
+                font-size: 2.5rem;
+                color: #d4d4d4;
+                close-t-area := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => close-app();
+                }
+            }
+        }
+    }
+}

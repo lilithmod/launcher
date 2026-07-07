@@ -5,178 +5,16 @@ import {
 import "./assets/fonts/Outfit-VariableFont_wght.ttf";
 import "./assets/fonts/Inter-VariableFont_opsz,wght.ttf";
 import "./assets/fonts/0xProto-Regular.ttf";
-
-global Palette {
-    out property <color> lilith-hover:#ba2147;
-    out property <color> lilith:#ef2d5b;
-}
-
-export global Config {
-    in-out property <bool> alpha;
-    in-out property <bool> debug;
-}
+import { PlayButtonSVGIcon } from "./assets/icons/command/play.slint";
+import { StopButtonSVGIcon } from"./assets/icons/command/stop.slint";
+import { Popup } from "./components/popup.slint";
+import { Palette, Config } from "./globals.slint";
+import { RightToggle, Toggle } from "./components/toggle.slint";
+import { LinkEntry } from "./components/link-entry.slint";
+import { DragBar } from "components/drag-bar.slint";
 
 export enum ProxyState { idle, updating, starting, running }
-component PlayButtonSVGIcon inherits Path {
-    commands: "M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z";
-    fill-rule: evenodd;
-    height: 1.5rem;
-    width: 1.5rem;
-    fill: white;
-}
-
-component StopButtonSVGIcon inherits Path {
-    commands: "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z";
-    fill-rule: evenodd;
-    height: 1.5rem;
-    width: 1.5rem;
-    fill: white;
-}
-
-component LinkEntry {
-    in property <string> text;
-    in property <image> icon;
-
-    callback clicked();
-
-    HorizontalLayout {
-        alignment: start;
-        docs-link-btn := TouchArea {
-            clicked => clicked();
-            mouse-cursor: pointer;
-            HorizontalLayout {
-                VerticalLayout {
-                    alignment: center;
-                    Image {
-                        colorize: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
-                        height: 1.4rem;
-                        source: icon;
-                        animate colorize {
-                            easing: ease-in-out;
-                            duration: 100ms;
-                        }
-                    }
-                }
-
-                VerticalLayout {
-                    alignment: center;
-                    Text {
-                        text: text;
-                        font-size: 1.25rem;
-                        color: docs-link-btn.has-hover ? Palette.lilith-hover : #d4d4d4;
-                        font-family: "Inter";
-                        animate color {
-                            easing: ease-in-out;
-                            duration: 100ms;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-component Toggle {
-    out property <bool> selected <=> toggle.selected;
-    in property <string> name;
-    HorizontalLayout {
-        cross-axis-alignment: center;
-        @children
-        VerticalLayout {
-            alignment: center;
-            Text {
-                color: #d4d4d4;
-                text: name;
-            }
-        }
-
-        Rectangle {
-            width: 8px;
-        }
-
-        Rectangle {
-            height: 16px;
-            width: 32px;
-            border-width: 0px;
-            border-radius: 8px;
-            border-color: white;
-            background: toggle.selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
-            toggle := TouchArea {
-                mouse-cursor: pointer;
-
-                out property <bool> selected:true;
-                clicked => {
-                    selected = !selected;
-                }
-            }
-
-            Rectangle {
-                height: 14px;
-                width: 14px;
-                background: white;
-                border-radius: 999px;
-                x: toggle.selected ? parent.width - self.width : 0;
-                animate x {
-                    duration: 100ms;
-                    easing: ease-in-out;
-                }
-            }
-        }
-    }
-}
-
-component LeftToggle {
-    in-out property <bool> selected;
-    in property <string> name;
-
-    callback clicked();
-    HorizontalLayout {
-        cross-axis-alignment: center;
-        alignment: start;
-
-        Rectangle {
-            height: 16px;
-            width: 32px;
-            border-width: 0px;
-            border-radius: 8px;
-            border-color: white;
-            background: selected ? (toggle.has-hover ? Palette.lilith-hover : Palette.lilith) : (toggle.has-hover ? #404040 : #27272a);
-            toggle := TouchArea {
-                mouse-cursor: pointer;
-
-                clicked => {
-                    selected = !selected;
-                    clicked();
-                }
-            }
-
-            Rectangle {
-                height: 14px;
-                width: 14px;
-                background: white;
-                border-radius: 999px;
-                x: selected ? parent.width - self.width : 0;
-                animate x {
-                    duration: 100ms;
-                    easing: ease-in-out;
-                }
-            }
-        }
-
-        Rectangle {
-            width: 8px;
-        }
-
-        VerticalLayout {
-            alignment: center;
-            Text {
-                color: #d4d4d4;
-                text: name;
-            }
-        }
-    }
-}
-
+export { Config }
 export component LogsWindow inherits Window {
     in-out property <string> logs: "";
     preferred-width: 1160px;
@@ -224,7 +62,7 @@ export component LogsWindow inherits Window {
                 }
             }
 
-            auto-scroll-toggle := Toggle {
+            auto-scroll-toggle := RightToggle {
                 name: "Auto-Scroll";
                 Rectangle { }
             }
@@ -232,87 +70,6 @@ export component LogsWindow inherits Window {
     }
 }
 
-
-component InfoPopup {
-    out property <bool> is-open <=> popup.is-open;
-    in-out property <string> title;
-    // in property <length> height;
-    public function toggle-popup() {
-        popup.is-open ? popup.close() : popup.show();
-    }
-
-    callback closing();
-
-    popup := PopupWindow {
-
-        height: parent.height;
-        width: parent.width;
-
-        close-policy: close-on-click-outside;
-        Rectangle {
-            height: parent.height - 200px;
-            width: parent.width / 4;
-            drop-shadow-offset-x: 2px;
-            drop-shadow-offset-y: 2px;
-            drop-shadow-blur: 4px;
-            drop-shadow-spread: 1px;
-            drop-shadow-color: black;
-            border-width: 2px;
-            border-color: #09090b;
-            border-radius: 8px;
-            background: #202023;
-            opacity: self.visible ? 100% : 0;
-            animate opacity {
-                easing: ease-in-out;
-                duration: 150ms;
-            }
-
-            VerticalLayout {
-                padding-left: 16px;
-                padding-right: 16px;
-                padding-bottom: 12px;
-
-                alignment: space-between;
-
-                @children
-
-                Rectangle {
-                    close-error-btn := TouchArea {
-                        clicked => {
-                            popup.close();
-                            closing()
-                        }
-                        mouse-cursor: pointer;
-                    }
-
-                    width: 100%;
-                    border-radius: 8px;
-                    border-width: 2px;
-                    border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
-                    background: close-error-btn.has-hover ? Palette.lilith : transparent;
-
-                    animate background, border-color {
-                        easing: ease-in-out;
-                        duration: 100ms;
-                    }
-                    VerticalLayout {
-                        padding-top: 8px;
-                        padding-bottom: 8px;
-                        alignment: center;
-                        cross-axis-alignment: center;
-                        Text {
-                            text: "OK";
-                            color: white;
-                            font-weight: FontWeight.bold;
-                            font-family: "Inter";
-                            font-size: 1.5rem;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 
 export component AppWindow inherits Window {
@@ -360,50 +117,19 @@ export component AppWindow inherits Window {
 
     HorizontalLayout {
         z: 67;
-
-        Rectangle {
-
-            height: 50px;
-            TouchArea {
-
-                pointer-event(event) => {
-                    if (event.button == PointerEventButton.left) {
-                        root.start-drag();
-                    }
-                }
-            }
-        }
-
-        HorizontalLayout {
-            cross-axis-alignment: center;
-            height: 40px;
-            spacing: 12px;
-            padding-right: 0.5rem;
-            Text {
-                text: "-";
-                font-size: 2.5rem;
-                color: #d4d4d4;
-                minimize-t-area := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => minimize-app();
-                }
-            }
-
-            Text {
-                text: "×";
-                font-size: 2.5rem;
-                color: #d4d4d4;
-                close-t-area := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => close-app();
-                }
-            }
+        DragBar {
+            start-drag => start-drag();
+            close-app => close-app();
+            minimize-app => minimize-app();
         }
     }
 
-    error-popup := InfoPopup {
+    error-popup := Popup {
         height: win_height;
         width: win_width;
+        start-drag => start-drag();
+        close-app => close-app();
+        minimize-app => minimize-app();
 
         VerticalLayout {
             alignment: center;
@@ -430,9 +156,12 @@ export component AppWindow inherits Window {
         }
     }
 
-    config-popup := InfoPopup {
+    config-popup := Popup {
         height: win_height;
         width: win_width;
+        start-drag => start-drag();
+        close-app => close-app();
+        minimize-app => minimize-app();
 
         VerticalLayout {
             alignment: start;
@@ -457,12 +186,12 @@ export component AppWindow inherits Window {
             VerticalLayout {
                 cross-axis-alignment: start;
                 spacing: 8px;
-                beta-toggle := LeftToggle {
+                beta-toggle := Toggle {
                     name: "Beta";
                     selected <=> Config.alpha;
                 }
 
-                deub-toggle := LeftToggle {
+                deub-toggle := Toggle {
                     name: "Debug";
                     selected <=> Config.debug;
                 }
