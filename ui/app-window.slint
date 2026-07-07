@@ -570,7 +570,7 @@ export component AppWindow inherits Window {
             LinkEntry {
                 text: "Changelog";
                 clicked => {
-                    Platform.open-url("https://github.com/lilithmod/releases/releases/latest");
+                    Platform.open-url("https://github.com/lilithmod/releases/releases\{Config.alpha ? "" : "/latest"} ");
                 }
                 icon: @image-url("./assets/icons/lucide/rocket.svg");
             }
