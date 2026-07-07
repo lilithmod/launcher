@@ -578,7 +578,7 @@ export component AppWindow inherits Window {
             LinkEntry {
                 text: "Settings";
                 clicked => {
-                    Platform.open-url("https://me.lilith.rip");
+                    Platform.open-url("https://me.lilith.rip\{Config.alpha ? "/beta" : ""} ");
                 }
                 icon: @image-url("./assets/icons/lucide/settings.svg");
             }
