@@ -39,15 +39,15 @@ jobs:
         run: |
           mkdir icon.iconset
           sips -z 16 16     icon/icon.png --out icon.iconset/icon_16x16.png
-          sips -z 32 32     icon/icon.png --out icon.iconset/[email protected]
+          sips -z 32 32     icon/icon.png --out icon.iconset/icon_16x16@2x.png
           sips -z 32 32     icon/icon.png --out icon.iconset/icon_32x32.png
-          sips -z 64 64     icon/icon.png --out icon.iconset/[email protected]
+          sips -z 64 64     icon/icon.png --out icon.iconset/icon_32x32@2x.png
           sips -z 128 128   icon/icon.png --out icon.iconset/icon_128x128.png
-          sips -z 256 256   icon/icon.png --out icon.iconset/[email protected]
+          sips -z 256 256   icon/icon.png --out icon.iconset/icon_128x128@2x.png
           sips -z 256 256   icon/icon.png --out icon.iconset/icon_256x256.png
-          sips -z 512 512   icon/icon.png --out icon.iconset/[email protected]
+          sips -z 512 512   icon/icon.png --out icon.iconset/icon_256x256@2x.png
           sips -z 512 512   icon/icon.png --out icon.iconset/icon_512x512.png
-          sips -z 1024 1024 icon/icon.png --out icon.iconset/[email protected]
+          sips -z 1024 1024 icon/icon.png --out icon.iconset/icon_512x512@2x.png
           iconutil -c icns icon.iconset -o icon/icon.icns
 
       - name: point Cargo.toml icon at the .icns
@@ -88,16 +88,20 @@ jobs:
           codesign --force --deep --sign - "${BUNDLE}"
           codesign --verify --verbose=2 "${BUNDLE}"
 
-      - name: zip .app
+      - name: create dmg from final signed .app
         run: |
-          cd "target/x86_64-apple-darwin/release/bundle/osx"
-          ditto -c -k --sequesterRsrc --keepParent "${APP_NAME}.app" "${APP_NAME}-macos-universal.zip"
+          BUNDLE="target/x86_64-apple-darwin/release/bundle/osx/${APP_NAME}.app"
+          DMG_ROOT="dmg_root"
+          mkdir -p "$DMG_ROOT"
+          cp -R "$BUNDLE" "$DMG_ROOT/"
+          ln -s /Applications "$DMG_ROOT/Applications"
+          hdiutil create -volname "${APP_NAME}" -srcfolder "$DMG_ROOT" -ov -format UDZO "${APP_NAME}-macos-universal.dmg"
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-macos-universal
-          path: target/x86_64-apple-darwin/release/bundle/osx/${{ env.APP_NAME }}-macos-universal.zip
+          path: ${{ env.APP_NAME }}-macos-universal.dmg
 
   build_linux:
     runs-on: ubuntu-latest
