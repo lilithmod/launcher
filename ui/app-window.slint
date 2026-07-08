@@ -132,15 +132,18 @@ export component AppWindow inherits Window {
         minimize-app => minimize-app();
 
         VerticalLayout {
-            alignment: center;
+            alignment: start;
             padding-top: 32px;
-            cross-axis-alignment: start;
-            Text {
-                text: error-popup-title;
-                color: white;
-                font-family: "Inter";
-                font-size: 2rem;
-                font-weight: FontWeight.black;
+            HorizontalLayout {
+                alignment: center;
+                cross-axis-alignment: center;
+                Text {
+                    text: error-popup-title;
+                    color: white;
+                    font-family: "Inter";
+                    font-size: 2rem;
+                    font-weight: FontWeight.black;
+                }
             }
 
             Rectangle {
