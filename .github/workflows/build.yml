@@ -1,0 +1,170 @@
+name: build launcher
+on:
+  workflow_dispatch:
+
+env:
+  APP_NAME: "Lilith Launcher"
+  BIN_NAME: "lilith_launcher"
+
+permissions:
+  contents: write
+
+jobs:
+  build_macos:
+    runs-on: macos-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.3.0
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: install cargo-bundle
+        run: cargo install cargo-bundle --locked
+
+      - name: build both architectures
+        run: |
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+
+      - name: bundle .app (structure, Info.plist, icon)
+        run: cargo bundle --release --target x86_64-apple-darwin
+
+      - name: merge into universal binary with lipo
+        run: |
+          BUNDLE="target/x86_64-apple-darwin/release/bundle/osx/${APP_NAME}.app"
+          lipo -create -output "universal_${BIN_NAME}" \
+            "target/aarch64-apple-darwin/release/${BIN_NAME}" \
+            "target/x86_64-apple-darwin/release/${BIN_NAME}"
+          lipo -info "universal_${BIN_NAME}"
+          cp "universal_${BIN_NAME}" "${BUNDLE}/Contents/MacOS/${BIN_NAME}"
+
+      - name: ad-hoc code sign
+        run: |
+          BUNDLE="target/x86_64-apple-darwin/release/bundle/osx/${APP_NAME}.app"
+          codesign --force --deep --sign - "${BUNDLE}"
+          codesign --verify --verbose=2 "${BUNDLE}"
+
+      - name: zip .app
+        run: |
+          cd "target/x86_64-apple-darwin/release/bundle/osx"
+          ditto -c -k --sequesterRsrc --keepParent "${APP_NAME}.app" "${APP_NAME}-macos-universal.zip"
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-macos-universal
+          path: target/x86_64-apple-darwin/release/bundle/osx/${{ env.APP_NAME }}-macos-universal.zip
+
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.3.0
+
+      - name: install system deps for Slint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libfontconfig1-dev \
+            libxkbcommon-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libgl1-mesa-dev
+
+      - name: install cargo-bundle
+        run: cargo install cargo-bundle --locked
+
+      - name: build + bundle (.deb)
+        run: cargo bundle --release
+
+      - name: also package raw binary tarball
+        run: |
+          mkdir -p dist/"${APP_NAME}"
+          cp target/release/"${BIN_NAME}" dist/"${APP_NAME}"/
+          cp -r icon dist/"${APP_NAME}"/icon
+          tar -czf "${APP_NAME}-linux-x86_64.tar.gz" -C dist "${APP_NAME}"
+
+      - name: upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-linux-deb
+          path: target/release/bundle/deb/*.deb
+
+      - name: upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-linux-x86_64
+          path: ${{ env.APP_NAME }}-linux-x86_64.tar.gz
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.3.0
+
+      - name: build
+        run: cargo build --release
+
+      - name: convert icon png to ico
+        run: magick convert icon/icon.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+
+      - name: download rcedit
+        run: curl -L -o rcedit.exe https://github.com/electron/rcedit/releases/latest/download/rcedit-x64.exe
+
+      - name: embed icon into exe
+        run: ./rcedit.exe "target/release/${{ env.BIN_NAME }}.exe" --set-icon icon.ico
+
+      - name: package
+        run: |
+          mkdir dist
+          copy target\release\${{ env.BIN_NAME }}.exe dist\
+          Compress-Archive -Path dist\* -DestinationPath "${{ env.APP_NAME }}-windows-x86_64.zip"
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-windows-x86_64
+          path: ${{ env.APP_NAME }}-windows-x86_64.zip
+
+  release:
+    needs: [build_macos, build_linux, build_windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v7
+
+      - name: read version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version' Cargo.toml | sed -E 's/version *= *"(.*)"/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $VERSION"
+
+      - name: download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: flatten artifact files
+        run: |
+          mkdir -p release-files
+          find artifacts -type f -exec cp {} release-files/ \;
+          ls -la release-files
+
+      - name: create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          prerelease: true
+          files: release-files/*
+          generate_release_notes: true

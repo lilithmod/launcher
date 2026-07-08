@@ -1,29 +1,45 @@
 [package]
-name = "slint-rust-template"
-version = "0.1.0"
+name = "lilith-launcher"
+version = "5.0.0-rc.1"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-compat = "0.2.5"
-config = "0.15.24"
 cpufeatures = "0.3.0"
 futures = "0.3.32"
 hex = "0.4.3"
-log = {version="0.4.32", features= ["kv"]}
+log = { version = "0.4.33", features = ["kv"] }
 reqwest = { version = "0.13.4", features = ["json", "stream"] }
 serde = "1.0.228"
 serde_json = "1.0.150"
 sha2 = "0.11.0"
-slint = {version="1.17.0", features=["live-preview", "unstable-winit-030"]}
-tokio = {version="1.52.3", features=["rt", "rt-multi-thread"]}
-dirs = "5.0"
+slint = { version = "1.17.1", features = [
+    "live-preview",
+    "unstable-winit-030",
+] }
+tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread"] }
+dirs = "6.0.0"
 strip-ansi-escapes = "0.2.1"
 
 [build-dependencies]
-slint-build = "1.17.0"
+slint-build = "1.17.1"
 
 [profile.release]
 codegen-units = 1
 lto = true
+opt-level = 3
+
+[package.metadata.bundle]
+name = "Lilith Launcher"
+identifier = "rip.lilith.launcher"
+icon = ["icon/appicon.png"]
+version = "5.0.0-rc.1"
+copyright = "Copyright (c) 2026 Lilith"
+category = "public.app-category.developer-tools"
+short_description = "Lilith Launcher"
+long_description = "Lilith Launcher."
+
+# Linux .deb specific (also read by cargo-bundle)
+[package.metadata.bundle.deb]
+depends = ["libfontconfig1", "libxkbcommon0"]
