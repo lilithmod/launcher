@@ -4,7 +4,6 @@ on:
 
 env:
   APP_NAME: "Lilith Launcher"
-  BIN_NAME: "lilith_launcher"
 
 permissions:
   contents: write
@@ -24,6 +23,19 @@ jobs:
       - name: install cargo-bundle
         run: cargo install cargo-bundle --locked
 
+      - name: detect binary name
+        id: bin
+        run: |
+          BIN_NAME=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].targets[] | select(.kind[] == "bin") | .name' | head -n1)
+          echo "name=$BIN_NAME" >> "$GITHUB_OUTPUT"
+          echo "Detected binary name: $BIN_NAME"
+
+      - name: generate icon set
+        run: |
+          for size in 16 32 64 128 256 512 1024; do
+            sips -z $size $size icon/icon.png --out "icon/icon-${size}.png"
+          done
+
       - name: build both architectures
         run: |
           cargo build --release --target aarch64-apple-darwin
@@ -33,6 +45,8 @@ jobs:
         run: cargo bundle --release --target x86_64-apple-darwin
 
       - name: merge into universal binary with lipo
+        env:
+          BIN_NAME: ${{ steps.bin.outputs.name }}
         run: |
           BUNDLE="target/x86_64-apple-darwin/release/bundle/osx/${APP_NAME}.app"
           lipo -create -output "universal_${BIN_NAME}" \
@@ -75,15 +89,31 @@ jobs:
             libxkbcommon-dev \
             libxcb-shape0-dev \
             libxcb-xfixes0-dev \
-            libgl1-mesa-dev
+            libgl1-mesa-dev \
+            imagemagick
 
       - name: install cargo-bundle
         run: cargo install cargo-bundle --locked
+
+      - name: detect binary name
+        id: bin
+        run: |
+          BIN_NAME=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].targets[] | select(.kind[] == "bin") | .name' | head -n1)
+          echo "name=$BIN_NAME" >> "$GITHUB_OUTPUT"
+          echo "Detected binary name: $BIN_NAME"
+
+      - name: generate icon set
+        run: |
+          for size in 16 32 64 128 256 512 1024; do
+            convert icon/icon.png -resize ${size}x${size} "icon/icon-${size}.png"
+          done
 
       - name: build + bundle (.deb)
         run: cargo bundle --release
 
       - name: also package raw binary tarball
+        env:
+          BIN_NAME: ${{ steps.bin.outputs.name }}
         run: |
           mkdir -p dist/"${APP_NAME}"
           cp target/release/"${BIN_NAME}" dist/"${APP_NAME}"/
@@ -114,6 +144,13 @@ jobs:
       - name: build
         run: cargo build --release
 
+      - name: detect binary name
+        id: bin
+        run: |
+          $BIN_NAME = (cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].targets[] | select(.kind[] == "bin") | .name' | Select-Object -First 1)
+          echo "name=$BIN_NAME" >> $env:GITHUB_OUTPUT
+          echo "Detected binary name: $BIN_NAME"
+
       - name: convert icon png to ico
         run: magick convert icon/icon.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
 
@@ -121,12 +158,12 @@ jobs:
         run: curl -L -o rcedit.exe https://github.com/electron/rcedit/releases/latest/download/rcedit-x64.exe
 
       - name: embed icon into exe
-        run: ./rcedit.exe "target/release/${{ env.BIN_NAME }}.exe" --set-icon icon.ico
+        run: ./rcedit.exe "target/release/${{ steps.bin.outputs.name }}.exe" --set-icon icon.ico
 
       - name: package
         run: |
           mkdir dist
-          copy target\release\${{ env.BIN_NAME }}.exe dist\
+          copy target\release\${{ steps.bin.outputs.name }}.exe dist\
           Compress-Archive -Path dist\* -DestinationPath "${{ env.APP_NAME }}-windows-x86_64.zip"
 
       - name: upload artifact

@@ -33,7 +33,15 @@ opt-level = 3
 [package.metadata.bundle]
 name = "Lilith Launcher"
 identifier = "rip.lilith.launcher"
-icon = ["icon/appicon.png"]
+icon = [
+    "icon/icon-16.png",
+    "icon/icon-32.png",
+    "icon/icon-64.png",
+    "icon/icon-128.png",
+    "icon/icon-256.png",
+    "icon/icon-512.png",
+    "icon/icon-1024.png",
+]
 version = "5.0.0-rc.1"
 copyright = "Copyright (c) 2026 Lilith"
 category = "public.app-category.developer-tools"
