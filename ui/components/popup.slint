@@ -4,6 +4,7 @@ import { DragBar } from "drag-bar.slint";
 export component Popup {
     out property <bool> is-open <=> popup.is-open;
     in-out property <string> title;
+    in-out property <string> btn-text: "OK";
     // in property <length> height;
     public function toggle-popup() {
         popup.is-open ? popup.close() : popup.show();
@@ -77,7 +78,6 @@ export component Popup {
                         border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
                         background: close-error-btn.has-hover ? Palette.lilith : transparent;
 
-                            text: "OK";
                         animate background, border-color {
                             easing: ease-in-out;
                             duration: 100ms;
@@ -88,6 +88,7 @@ export component Popup {
                             alignment: center;
                             cross-axis-alignment: center;
                             Text {
+                                text: btn-text;
                                 color: white;
                                 font-weight: FontWeight.bold;
                                 font-family: "Inter";
