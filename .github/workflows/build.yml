@@ -30,11 +30,38 @@ jobs:
           echo "name=$BIN_NAME" >> "$GITHUB_OUTPUT"
           echo "Detected binary name: $BIN_NAME"
 
-      - name: generate icon set
+      - name: verify source icon exists
         run: |
-          for size in 16 32 64 128 256 512 1024; do
-            sips -z $size $size icon/icon.png --out "icon/icon-${size}.png"
-          done
+          test -f icon/icon.png || (echo "::error::icon/icon.png not found in repo" && exit 1)
+          file icon/icon.png
+
+      - name: build .icns with iconutil
+        run: |
+          mkdir icon.iconset
+          sips -z 16 16     icon/icon.png --out icon.iconset/icon_16x16.png
+          sips -z 32 32     icon/icon.png --out icon.iconset/[email protected]
+          sips -z 32 32     icon/icon.png --out icon.iconset/icon_32x32.png
+          sips -z 64 64     icon/icon.png --out icon.iconset/[email protected]
+          sips -z 128 128   icon/icon.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256   icon/icon.png --out icon.iconset/[email protected]
+          sips -z 256 256   icon/icon.png --out icon.iconset/icon_256x256.png
+          sips -z 512 512   icon/icon.png --out icon.iconset/[email protected]
+          sips -z 512 512   icon/icon.png --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 icon/icon.png --out icon.iconset/[email protected]
+          iconutil -c icns icon.iconset -o icon/icon.icns
+
+      - name: point Cargo.toml icon at the .icns
+        run: |
+          python3 - <<'PY'
+          import re
+          with open("Cargo.toml") as f:
+              content = f.read()
+          content = re.sub(r"icon\s*=\s*\[.*?\]", 'icon = ["icon/icon.icns"]', content, flags=re.S)
+          with open("Cargo.toml", "w") as f:
+              f.write(content)
+          PY
+          grep -A1 "^\[package.metadata.bundle\]" Cargo.toml || true
+          grep "icon" Cargo.toml
 
       - name: build both architectures
         run: |
@@ -104,9 +131,13 @@ jobs:
 
       - name: generate icon set
         run: |
-          for size in 16 32 64 128 256 512 1024; do
-            convert icon/icon.png -resize ${size}x${size} "icon/icon-${size}.png"
-          done
+          convert icon/icon.png -resize 16x16     icon/icon-16.png
+          convert icon/icon.png -resize 32x32     icon/icon-32.png
+          convert icon/icon.png -resize 64x64     icon/icon-64.png
+          convert icon/icon.png -resize 128x128   icon/icon-128.png
+          convert icon/icon.png -resize 256x256   icon/icon-256.png
+          convert icon/icon.png -resize 512x512   icon/icon-512.png
+          convert icon/icon.png -resize 1024x1024 icon/icon-1024.png
 
       - name: build + bundle (.deb)
         run: cargo bundle --release
