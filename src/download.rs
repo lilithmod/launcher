@@ -59,23 +59,29 @@ pub struct ArtifactEntry {
     pub size: u64,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct MACOSArtifacts {
     x86_64: ArtifactEntry,
     aarch64: ArtifactEntry,
 }
+
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct StandardArtifacts {
     modern: ArtifactEntry,
     baseline: ArtifactEntry,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct Artifacts {
     macos: MACOSArtifacts,
     linux: StandardArtifacts,
     windows: StandardArtifacts,
 }
+
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct ReleaseResponse {
     name: String,
@@ -150,6 +156,7 @@ pub async fn fetch_release(alpha: bool) -> Result<ReleaseResponse, FetchReleaseE
     Ok(release)
 }
 
+#[allow(unreachable_code)]
 pub fn get_artifact_from_release(release: ReleaseResponse) -> Option<ArtifactEntry> {
     #[cfg(target_os = "macos")]
     {

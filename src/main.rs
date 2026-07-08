@@ -5,15 +5,10 @@ mod download;
 mod launch;
 mod utils;
 
-use futures::executor::block_on;
-use log::{debug, info};
-use slint::{
-    SharedString, StyledText,
-    platform::{Clipboard, Platform},
-    winit_030::WinitWindowAccessor,
-};
-use std::{error::Error, path::Path, sync::Arc};
-use tokio::{runtime::Runtime, task::spawn_blocking};
+use log::info;
+use slint::{SharedString, StyledText, winit_030::WinitWindowAccessor};
+use std::{error::Error, sync::Arc};
+use tokio::runtime::Runtime;
 
 use crate::{
     launch::PROCESS,

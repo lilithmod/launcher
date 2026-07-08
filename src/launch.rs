@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::{error, info};
-use slint::{SharedString, StyledText, Weak};
+use slint::{SharedString, Weak};
 use strip_ansi_escapes::strip_str;
 use tokio::sync::RwLock;
 
