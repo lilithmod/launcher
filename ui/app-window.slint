@@ -54,10 +54,11 @@ export component LogsWindow inherits Window {
                 HorizontalLayout {
                     alignment: start;
 
-                    Text {
+                    TextInput {
                         font-family: "0xProto";
                         text: logs;
                         color: #d4d4d4;
+                        read-only: true;
                     }
                 }
             }
