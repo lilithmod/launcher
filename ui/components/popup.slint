@@ -16,75 +16,83 @@ export component Popup {
     callback closing();
 
     popup := PopupWindow {
-
+        close-policy: close-on-click-outside;
         height: parent.height;
         width: parent.width;
-        HorizontalLayout {
-            z: 67;
-            DragBar {
-                start-drag => start-drag();
-                close-app => close-app();
-                minimize-app => minimize-app();
-            }
-        }
-
         Rectangle {
-            height: parent.height - 200px;
-            width: parent.width / 4;
-            drop-shadow-offset-x: 2px;
-            drop-shadow-offset-y: 2px;
-            drop-shadow-blur: 4px;
-            drop-shadow-spread: 1px;
-            drop-shadow-color: black;
-            border-width: 2px;
-            border-color: #09090b;
-            border-radius: 8px;
-            background: #202023;
-            opacity: self.visible ? 100% : 0;
-            animate opacity {
+            background: is-open ? #000000.with-alpha(0.45) : #000000.with-alpha(0);
+
+            animate background {
                 easing: ease-in-out;
                 duration: 150ms;
             }
+            HorizontalLayout {
+                z: 67;
+                DragBar {
+                    start-drag => start-drag();
+                    close-app => close-app();
+                    minimize-app => minimize-app();
+                }
+            }
 
-            VerticalLayout {
-                padding-left: 16px;
-                padding-right: 16px;
-                padding-bottom: 12px;
+            Rectangle {
+                height: parent.height - 200px;
+                width: parent.width / 4;
+                drop-shadow-offset-x: 2px;
+                drop-shadow-offset-y: 2px;
+                drop-shadow-blur: 4px;
+                drop-shadow-spread: 1px;
+                drop-shadow-color: black;
+                border-width: 2px;
+                border-color: #09090b;
+                border-radius: 8px;
+                background: #202023;
+                opacity: is-open ? 100% : 0;
+                animate opacity {
+                    easing: ease-in-out;
+                    duration: 150ms;
+                }
 
-                alignment: space-between;
+                VerticalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    padding-bottom: 12px;
 
-                @children
+                    alignment: space-between;
 
-                Rectangle {
-                    close-error-btn := TouchArea {
-                        clicked => {
-                            popup.close();
-                            closing()
+                    @children
+
+                    Rectangle {
+                        close-error-btn := TouchArea {
+                            clicked => {
+                                popup.close();
+                                closing()
+                            }
+                            mouse-cursor: pointer;
                         }
-                        mouse-cursor: pointer;
-                    }
 
-                    width: 100%;
-                    border-radius: 8px;
-                    border-width: 2px;
-                    border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
-                    background: close-error-btn.has-hover ? Palette.lilith : transparent;
+                        width: 100%;
+                        border-radius: 8px;
+                        border-width: 2px;
+                        border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
+                        background: close-error-btn.has-hover ? Palette.lilith : transparent;
 
-                    animate background, border-color {
-                        easing: ease-in-out;
-                        duration: 100ms;
-                    }
-                    VerticalLayout {
-                        padding-top: 8px;
-                        padding-bottom: 8px;
-                        alignment: center;
-                        cross-axis-alignment: center;
-                        Text {
                             text: "OK";
-                            color: white;
-                            font-weight: FontWeight.bold;
-                            font-family: "Inter";
-                            font-size: 1.5rem;
+                        animate background, border-color {
+                            easing: ease-in-out;
+                            duration: 100ms;
+                        }
+                        VerticalLayout {
+                            padding-top: 8px;
+                            padding-bottom: 8px;
+                            alignment: center;
+                            cross-axis-alignment: center;
+                            Text {
+                                color: white;
+                                font-weight: FontWeight.bold;
+                                font-family: "Inter";
+                                font-size: 1.5rem;
+                            }
                         }
                     }
                 }
