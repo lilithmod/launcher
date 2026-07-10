@@ -9,7 +9,7 @@ edition = "2024"
 cpufeatures = "0.3.0"
 futures = "0.3.32"
 hex = "0.4.3"
-log = { version = "0.4.33", features = ["kv"] }
+log = { version = "0.4.33", features = [] }
 reqwest = { version = "0.13.4", features = ["json", "stream"] }
 serde = "1.0.228"
 serde_json = "1.0.150"
@@ -21,6 +21,12 @@ slint = { version = "1.17.1", features = [
 tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread"] }
 dirs = "6.0.0"
 strip-ansi-escapes = "0.2.1"
+
+[target.'cfg(not(windows))'.dependencies]
+libc = "0.2.186"
+
+[target.'cfg(windows)'.dependencies]
+sysinfo = "0.39.6"
 
 [build-dependencies]
 slint-build = "1.17.1"

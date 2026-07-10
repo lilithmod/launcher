@@ -2,7 +2,9 @@ use std::{
     fs::remove_file,
     io::{BufRead, BufReader},
     process::{Child, Command, Stdio},
+    ptr::null_mut,
     sync::{Arc, LazyLock},
+    thread,
 };
 
 use log::{error, info};
@@ -123,6 +125,8 @@ pub fn run(
             ("Runtime Error:".to_string(), e.to_string())
         })?;
 
+    waitpid(cmd.id(), ui_handle.clone());
+
     let stdout = cmd.stdout.take().unwrap();
     PROCESS.lock().unwrap().replace(cmd);
 
@@ -148,4 +152,33 @@ pub fn run(
         });
     }
     Ok(true)
+}
+
+fn waitpid(pid: u32, ui_handle_for_wait: Weak<AppWindow>) {
+    thread::spawn(move || {
+        #[cfg(not(target_os = "windows"))]
+        {
+            let status: *mut i32 = null_mut();
+            unsafe {
+                info!(target: "launch::wait", "starting to wait");
+                libc::waitpid(pid as i32, status, 0);
+            }
+        }
+        #[cfg(target_os = "windows")]
+        {
+            use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
+            let s = System::new_with_specifics(
+                RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()),
+            );
+            if let Some(running) = s.process(Pid::from_u32(pid)) {
+                info!(target: "launch::wait", "starting to wait");
+                let _ = running.wait();
+            }
+        }
+        let _ = slint::invoke_from_event_loop(move || {
+            ui_handle_for_wait
+                .unwrap()
+                .set_proxy_state(crate::ProxyState::Idle);
+        });
+    });
 }
