@@ -17,8 +17,8 @@ export enum ProxyState { idle, updating, starting, running }
 export { Config }
 export component LogsWindow inherits Window {
     in-out property <string> logs: "";
-    preferred-width: 1160px;
-    preferred-height: 646px;
+    min-width: 655px;
+    min-height: 350px;
     title: "Lilith Logs";
     public function update-logs(new: string) {
         logs = logs + new + "\n";
