@@ -1,7 +1,7 @@
 use std::{
     fs::remove_file,
     io::{BufRead, BufReader},
-    process::{Child, Command, Stdio},
+    process::{Child, Command},
     ptr::null_mut,
     sync::{Arc, LazyLock},
     thread,
@@ -115,10 +115,18 @@ pub fn run(
             .status();
     }
 
-    let mut cmd = Command::new(exec_path)
+    let (out, writer) = std::io::pipe().map_err(|e| {
+        error!(target:"launch::pipe", "couldn't create pipes: {e}");
+        ("Launch Error:".to_string(), e.to_string())
+    })?;
+    let cmd = Command::new(exec_path)
         .args(["--iknowwhatimdoing"])
         .args(debug.then_some("--debug"))
-        .stdout(Stdio::piped())
+        .stdout(writer.try_clone().map_err(|e| {
+            error!(target:"launch::pipe", "couldn't duplicate pipe: {e}");
+            ("Launch Error:".to_string(), e.to_string())
+        })?)
+        .stderr(writer)
         .spawn()
         .map_err(|e| {
             error!(target:"run", "got a {} error while starting lilith: {e}", e.kind());
@@ -127,7 +135,6 @@ pub fn run(
 
     waitpid(cmd.id(), ui_handle.clone());
 
-    let stdout = cmd.stdout.take().unwrap();
     PROCESS.lock().unwrap().replace(cmd);
 
     let _ = slint::invoke_from_event_loop(move || {
@@ -136,7 +143,7 @@ pub fn run(
             .set_proxy_state(crate::ProxyState::Running);
     });
 
-    let reader = BufReader::new(stdout);
+    let reader = BufReader::new(out);
     for line in reader.lines() {
         let line_content = line.map_or_else(
             |_| "failed to get log line :(".to_string(),
