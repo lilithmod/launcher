@@ -120,23 +120,29 @@ pub fn run(
         error!(target:"launch::pipe", "couldn't create pipes: {e}");
         ("Launch Error:".to_string(), e.to_string())
     })?;
-    let cmd = Command::new(exec_path)
-        .args(["--iknowwhatimdoing", "--launcher-cursor-control"])
+    let mut cmd = Command::new(exec_path);
+    cmd.args(["--iknowwhatimdoing", "--launcher-cursor-control"])
         .args(debug.then_some("--debug"))
         .stdout(writer.try_clone().map_err(|e| {
             error!(target:"launch::pipe", "couldn't duplicate pipe: {e}");
             ("Launch Error:".to_string(), e.to_string())
         })?)
-        .stderr(writer)
-        .spawn()
-        .map_err(|e| {
-            error!(target:"run", "got a {} error while starting lilith: {e}", e.kind());
-            ("Runtime Error:".to_string(), e.to_string())
-        })?;
+        .stderr(writer);
 
-    waitpid(cmd.id(), ui_handle.clone());
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000);
+    }
 
-    PROCESS.lock().unwrap().replace(cmd);
+    let child = cmd.spawn().map_err(|e| {
+        error!(target:"run", "got a {} error while starting lilith: {e}", e.kind());
+        ("Runtime Error:".to_string(), e.to_string())
+    })?;
+
+    waitpid(child.id(), ui_handle.clone());
+
+    PROCESS.lock().unwrap().replace(child);
 
     let reader = BufReader::new(out);
     for line in reader.lines() {
