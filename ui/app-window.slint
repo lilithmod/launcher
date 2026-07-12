@@ -82,6 +82,10 @@ export component AppWindow inherits Window {
     in-out property <ProxyState> proxy-state: idle;
     in-out property <string> status-text;
 
+    in property <string> auth-link: "https://lilith.rip";
+
+    in property <string> connection-ip: "localhost";
+
     width: win_width;
     height: win_height;
 
@@ -99,12 +103,20 @@ export component AppWindow inherits Window {
     callback close-app();
     callback minimize-app();
 
+    callback copy-text(string);
+
     public function toggle-error-popup() {
         error-popup.toggle-popup();
     }
 
     public function toggle-config-popup() {
         config-popup.toggle-popup();
+    }
+
+    public function toggle-auth-link-popup() {
+        auth-link-popup.toggle-popup();
+    }  public function toggle-localhost-tuto-popup() {
+        localhost-tuto-popup.toggle-popup();
     }
 
     in-out property <string> error-popup-title: "ANNOUNCEMENT";
@@ -125,9 +137,101 @@ export component AppWindow inherits Window {
         }
     }
 
+    auth-link-popup := Popup {
+        height: win_height;
+        width: win_width;
+        h_scaling: -430px;
+        start-drag => start-drag();
+        close-app => close-app();
+        minimize-app => minimize-app();
+        closing => {
+            Platform.open-url(auth-link)
+        }
+        btn-text: "Verify";
+        VerticalLayout {
+            alignment: start;
+            padding-top: 32px;
+            HorizontalLayout {
+                alignment: center;
+                cross-axis-alignment: center;
+                Text {
+                    text: "Verify your hardware";
+                    color: white;
+                    font-family: "Inter";
+                    font-size: 2rem;
+                    font-weight: FontWeight.black;
+                }
+            }
+
+            Rectangle {
+                height: 10px;
+            }
+
+            StyledText {
+                text: @markdown("You will be redirected to:\n \{auth-link}\nThis device will be linked to your Discord account.");
+                horizontal-alignment: center;
+                default-font-size: 1.25rem;
+                default-color: #d4d4d4;
+                default-font-family: "Inter";
+            }
+        }
+    }
+    copier := TextInput {
+    height: 0;
+    width:0;
+    visible: false;
+    read-only: true;
+    text: connection-ip;
+    }
+    localhost-tuto-popup := Popup {
+        height: win_height;
+        width: win_width ;
+        h_scaling: -430px;
+        start-drag => start-drag();
+        close-app => close-app();
+        minimize-app => minimize-app();
+        closing => {
+        copier.select-all();
+        copier.copy();
+        }
+
+        btn-text: "Copy";
+        VerticalLayout {
+            alignment: start;
+            padding-top: 32px;
+            HorizontalLayout {
+                alignment: center;
+                cross-axis-alignment: center;
+                Text {
+                    text: "Connect to Lilith";
+                    color: white;
+                    font-family: "Inter";
+                    font-size: 2rem;
+                    font-weight: FontWeight.black;
+                }
+            }
+
+            Rectangle {
+                height: 10px;
+            }
+
+            StyledText {
+                text: @markdown("Connect to \{connection-ip} from any client.");
+                horizontal-alignment: center;
+                default-font-size: 1.25rem;
+                default-color: #d4d4d4;
+                default-font-family: "Inter";
+            }
+            Image {
+            source: @image-url("./assets/LocalhostModal.png");
+            }
+        }
+    }
+
     error-popup := Popup {
         height: win_height;
         width: win_width;
+        h_scaling: -400px;
         start-drag => start-drag();
         close-app => close-app();
         minimize-app => minimize-app();
@@ -152,6 +256,7 @@ export component AppWindow inherits Window {
             }
 
             StyledText {
+                horizontal-alignment: center;
                 text: error-popup-body;
                 default-font-size: 1.25rem;
                 default-color: #d4d4d4;
@@ -214,7 +319,7 @@ export component AppWindow inherits Window {
 
             Image {
                 TouchArea {
-                    double-clicked => { toggle-config-popup() }
+                    double-clicked => { toggle-localhost-tuto-popup() }
                 }
 
                 horizontal-alignment: left;

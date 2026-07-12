@@ -5,6 +5,7 @@ export component Popup {
     out property <bool> is-open <=> popup.is-open;
     in-out property <string> title;
     in-out property <string> btn-text: "OK";
+    in property <length> h_scaling:-200px;
     // in property <length> height;
     public function toggle-popup() {
         popup.is-open ? popup.close() : popup.show();
@@ -37,7 +38,7 @@ export component Popup {
             }
 
             Rectangle {
-                height: parent.height - 200px;
+                height: parent.height + h_scaling;
                 width: parent.width / 4;
                 drop-shadow-offset-x: 2px;
                 drop-shadow-offset-y: 2px;
@@ -74,13 +75,14 @@ export component Popup {
 
                         width: 100%;
                         border-radius: 8px;
-                        border-width: 2px;
-                        border-color: close-error-btn.has-hover ? Palette.lilith-hover : Palette.lilith;
-                        background: close-error-btn.has-hover ? Palette.lilith : transparent;
+                        border-width: 1px;
+                        background: close-error-btn.has-hover ? rgba(255, 32, 86, 100%) : rgba(255, 32, 86, 84%);
+                        border-color: rgb(259,99,126);
+
 
                         animate background, border-color {
                             easing: ease-in-out;
-                            duration: 100ms;
+                            duration: 150ms;
                         }
                         VerticalLayout {
                             padding-top: 8px;

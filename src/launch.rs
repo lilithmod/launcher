@@ -8,7 +8,7 @@ use std::{
 };
 
 use log::{error, info};
-use slint::{SharedString, Weak};
+use slint::{SharedString, ToSharedString, Weak};
 use strip_ansi_escapes::strip_str;
 use tokio::sync::RwLock;
 
@@ -18,6 +18,7 @@ pub static PROCESS: LazyLock<std::sync::Mutex<Option<Child>>> =
 use crate::{
     AppWindow, LogsWindow,
     download::{compute_file_hash, download_artifact, fetch_release, get_artifact_from_release},
+    launch::LineAction::Event,
     utils::{config::LauncherConfig, files::bin_dir},
 };
 /**
@@ -60,7 +61,7 @@ pub async fn launch(
                         let _ = remove_file(expected_path);
                         Ok(false)
                     } else {
-                        run(app_handle, &expected_path, logs_handle, config.debug)
+                        run(app_handle, logs_handle, &expected_path, config.debug)
                     }
                 } else {
                     {
@@ -78,7 +79,7 @@ pub async fn launch(
                     )
                     .await
                     {
-                        Ok(_) => run(app_handle, &expected_path, logs_handle, config.debug),
+                        Ok(_) => run(app_handle, logs_handle, &expected_path, config.debug),
                         Err(e) => Err(("Download Error:".to_string(), e.to_string())),
                     }
                 }
@@ -93,8 +94,8 @@ pub async fn launch(
 
 pub fn run(
     ui_handle: Weak<AppWindow>,
-    exec_path: &std::path::Path,
     logs_handle: Weak<LogsWindow>,
+    exec_path: &std::path::Path,
     debug: bool,
 ) -> Result<bool, (String, String)> {
     info!(target:"run", "running lilith living at {}", exec_path.as_os_str().display());
@@ -120,7 +121,7 @@ pub fn run(
         ("Launch Error:".to_string(), e.to_string())
     })?;
     let cmd = Command::new(exec_path)
-        .args(["--iknowwhatimdoing"])
+        .args(["--iknowwhatimdoing", "--launcher-cursor-control"])
         .args(debug.then_some("--debug"))
         .stdout(writer.try_clone().map_err(|e| {
             error!(target:"launch::pipe", "couldn't duplicate pipe: {e}");
@@ -137,12 +138,6 @@ pub fn run(
 
     PROCESS.lock().unwrap().replace(cmd);
 
-    let _ = slint::invoke_from_event_loop(move || {
-        ui_handle
-            .unwrap()
-            .set_proxy_state(crate::ProxyState::Running);
-    });
-
     let reader = BufReader::new(out);
     for line in reader.lines() {
         let line_content = line.map_or_else(
@@ -151,14 +146,63 @@ pub fn run(
         );
         info!(target:"proxy","{}", line_content);
 
-        let logs_ui = logs_handle.clone();
-        let _ = slint::invoke_from_event_loop(move || {
-            logs_ui
-                .unwrap()
-                .invoke_update_logs(SharedString::from(line_content));
-        });
+        let parsed = parse_line(line_content);
+
+        let _ = match parsed {
+            LineAction::Print(content) => slint::invoke_from_event_loop({
+                let logs_ui = logs_handle.clone();
+                move || {
+                    logs_ui
+                        .unwrap()
+                        .invoke_update_logs(SharedString::from(content));
+                }
+            }),
+
+            Event(proxy_event) => {
+                let ui = ui_handle.clone();
+                match proxy_event {
+                    ProxyEvents::Auth(auth_link) => slint::invoke_from_event_loop(move || {
+                        let u = ui.unwrap();
+                        u.set_auth_link(auth_link.to_shared_string());
+                        u.invoke_toggle_auth_link_popup();
+                    }),
+                    ProxyEvents::IP(ip) => slint::invoke_from_event_loop(move || {
+                        let u = ui.unwrap();
+                        u.set_connection_ip(ip.to_shared_string());
+                        u.invoke_toggle_localhost_tuto_popup();
+                        u.set_proxy_state(crate::ProxyState::Running);
+                    }),
+                }
+            }
+        };
     }
     Ok(true)
+}
+
+enum ProxyEvents {
+    Auth(String),
+    IP(String),
+}
+
+enum LineAction {
+    Print(String),
+    Event(ProxyEvents),
+}
+fn parse_line(line: String) -> LineAction {
+    if line.starts_with("launcher|") {
+        let args: Vec<&str> = line.split("|").collect();
+        if args.len() == 3 {
+            match args[2] {
+                "auth_link" => LineAction::Event(ProxyEvents::Auth(args[3].to_string())),
+                "server_address" => LineAction::Event(ProxyEvents::IP(args[3].to_string())),
+                _ => LineAction::Print(line),
+            }
+        } else {
+            LineAction::Print(line)
+        }
+    } else {
+        LineAction::Print(line)
+    }
 }
 
 fn waitpid(pid: u32, ui_handle_for_wait: Weak<AppWindow>) {
