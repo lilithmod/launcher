@@ -195,16 +195,12 @@ enum LineAction {
     Event(ProxyEvents),
 }
 fn parse_line(line: String) -> LineAction {
-    if line.starts_with("launcher|") {
-        let args: Vec<&str> = line.split("|").collect();
-        if args.len() == 3 {
-            match args[2] {
-                "auth_link" => LineAction::Event(ProxyEvents::Auth(args[3].to_string())),
-                "server_address" => LineAction::Event(ProxyEvents::IP(args[3].to_string())),
-                _ => LineAction::Print(line),
-            }
-        } else {
-            LineAction::Print(line)
+    let args: Vec<&str> = line.split("|").collect();
+    if args.len() == 3 && args[0] == "launcher" {
+        match args[1] {
+            "auth_link" => LineAction::Event(ProxyEvents::Auth(args[2].to_string())),
+            "server_address" => LineAction::Event(ProxyEvents::IP(args[2].to_string())),
+            _ => LineAction::Print(line),
         }
     } else {
         LineAction::Print(line)
