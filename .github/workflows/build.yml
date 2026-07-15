@@ -4,7 +4,7 @@ on:
 
 env:
   APP_NAME: "Lilith Launcher"
-
+  
 permissions:
   contents: write
 
@@ -16,9 +16,14 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.3.0
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-universal
 
       - name: install cargo-bundle
         run: cargo install cargo-bundle --locked
@@ -110,7 +115,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.3.0
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: linux-x86_64
 
       - name: install system deps for Slint
         run: |
@@ -174,7 +184,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.3.0
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-x86_64
 
       - name: build
         run: cargo build --release

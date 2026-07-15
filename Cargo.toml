@@ -48,7 +48,7 @@ icon = [
     "icon/icon-512.png",
     "icon/icon-1024.png",
 ]
-version = "5.0.0-rc.1"
+version = "5.0.0-rc.2"
 copyright = "Copyright (c) 2026 Lilith"
 category = "public.app-category.developer-tools"
 short_description = "Lilith Launcher"
