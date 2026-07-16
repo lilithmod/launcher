@@ -10,10 +10,20 @@ use crate::utils::{
     files::config_path,
 };
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LauncherConfig {
     pub alpha: bool,
     pub debug: bool,
+    pub show_localhost_tuto: bool,
+}
+impl Default for LauncherConfig {
+    fn default() -> Self {
+        Self {
+            alpha: false,
+            debug: false,
+            show_localhost_tuto: true,
+        }
+    }
 }
 
 pub fn init_config() -> Arc<RwLock<LauncherConfig>> {

@@ -127,10 +127,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             let _ = logs_handle.unwrap().show();
         }
     });
-
     ui.on_config_popup_closed({
         let ui_handle = ui.as_weak();
         let config = config_handle.clone();
+        let rt_handle = (&rt).clone();
 
         move || {
             let ui_strong = ui_handle.unwrap();
@@ -139,14 +139,40 @@ fn main() -> Result<(), Box<dyn Error>> {
             let debug = global_slint_config.get_debug();
             let c = config.clone();
 
-            rt.spawn(async move {
+            rt_handle.spawn(async move {
                 let mut writable = c.write().await;
                 writable.alpha = alpha.clone();
                 writable.debug = debug.clone();
+                let show_localhost_tuto = writable.show_localhost_tuto.clone();
                 drop(writable);
                 save_config(LauncherConfig {
                     alpha: alpha,
                     debug: debug,
+                    show_localhost_tuto: show_localhost_tuto,
+                })
+                .await
+            });
+        }
+    });
+
+    ui.on_disable_localhost_tuto_popup({
+        let config = config_handle.clone();
+        let rt_handle = (&rt).clone();
+        move || {
+            let c = config.clone();
+
+            rt_handle.spawn(async move {
+                let mut writable = c.write().await;
+                let alpha = writable.alpha.clone();
+                let debug = writable.debug.clone();
+                writable.show_localhost_tuto = false;
+                let show_localhost_tuto = false;
+
+                drop(writable);
+                save_config(LauncherConfig {
+                    alpha: alpha,
+                    debug: debug,
+                    show_localhost_tuto: show_localhost_tuto,
                 })
                 .await
             });

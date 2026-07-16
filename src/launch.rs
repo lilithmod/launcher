@@ -31,7 +31,7 @@ pub async fn launch(
     config_handle: Arc<RwLock<LauncherConfig>>,
     logs_handle: Weak<LogsWindow>,
 ) -> Result<bool, (String, String)> {
-    let config = config_handle.read().await;
+    let config = config_handle.read().await.clone();
 
     info!(target:"launch", "loaded config: {config:?}");
 
@@ -61,7 +61,13 @@ pub async fn launch(
                         let _ = remove_file(expected_path);
                         Ok(false)
                     } else {
-                        run(app_handle, logs_handle, &expected_path, config.debug)
+                        run(
+                            app_handle,
+                            logs_handle,
+                            &expected_path,
+                            config.debug,
+                            config.show_localhost_tuto,
+                        )
                     }
                 } else {
                     {
@@ -79,7 +85,13 @@ pub async fn launch(
                     )
                     .await
                     {
-                        Ok(_) => run(app_handle, logs_handle, &expected_path, config.debug),
+                        Ok(_) => run(
+                            app_handle,
+                            logs_handle,
+                            &expected_path,
+                            config.debug,
+                            config.show_localhost_tuto,
+                        ),
                         Err(e) => Err(("Download Error:".to_string(), e.to_string())),
                     }
                 }
@@ -97,6 +109,7 @@ pub fn run(
     logs_handle: Weak<LogsWindow>,
     exec_path: &std::path::Path,
     debug: bool,
+    show_localhost_tuto: bool,
 ) -> Result<bool, (String, String)> {
     info!(target:"run", "running lilith living at {}", exec_path.as_os_str().display());
 
@@ -174,8 +187,10 @@ pub fn run(
                     }),
                     ProxyEvents::IP(ip) => slint::invoke_from_event_loop(move || {
                         let u = ui.unwrap();
-                        u.set_connection_ip(ip.to_shared_string());
-                        u.invoke_toggle_localhost_tuto_popup();
+                        if show_localhost_tuto {
+                            u.set_connection_ip(ip.to_shared_string());
+                            u.invoke_toggle_localhost_tuto_popup()
+                        };
                         u.set_proxy_state(crate::ProxyState::Running);
                     }),
                 }

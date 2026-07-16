@@ -100,6 +100,8 @@ export component AppWindow inherits Window {
 
     callback config-popup-closed <=> config-popup.closing;
 
+    callback disable-localhost-tuto-popup();
+
     callback close-app();
     callback minimize-app();
 
@@ -177,11 +179,11 @@ export component AppWindow inherits Window {
         }
     }
     copier := TextInput {
-    height: 0;
-    width:0;
-    visible: false;
-    read-only: true;
-    text: connection-ip;
+        height: 0;
+        width:0;
+        visible: false;
+        read-only: true;
+        text: connection-ip;
     }
     localhost-tuto-popup := Popup {
         height: win_height;
@@ -190,10 +192,13 @@ export component AppWindow inherits Window {
         start-drag => start-drag();
         close-app => close-app();
         minimize-app => minimize-app();
+        second-btn: true;
         closing => {
-        copier.select-all();
-        copier.copy();
+            copier.select-all();
+            copier.copy();
         }
+
+        second-btn-close => {disable-localhost-tuto-popup()}
 
         btn-text: "Copy";
         VerticalLayout {
