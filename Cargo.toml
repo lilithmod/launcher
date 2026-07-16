@@ -1,6 +1,6 @@
 [package]
 name = "lilith-launcher"
-version = "5.0.0-rc.2"
+version = "5.0.0-rc.3"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -48,7 +48,7 @@ icon = [
     "icon/icon-512.png",
     "icon/icon-1024.png",
 ]
-version = "5.0.0-rc.2"
+version = "5.0.0-rc.3"
 copyright = "Copyright (c) 2026 Lilith"
 category = "public.app-category.developer-tools"
 short_description = "Lilith Launcher"
