@@ -4,7 +4,7 @@ on:
 
 env:
   APP_NAME: "Lilith Launcher"
-  
+
 permissions:
   contents: write
 
@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-macos-universal
-          path: ${{ env.APP_NAME }}-macos-universal.dmg
+          path: ${{ env.APP_NAME }}-macos.dmg
 
   build_linux:
     runs-on: ubuntu-latest
@@ -213,14 +213,13 @@ jobs:
       - name: package
         run: |
           mkdir dist
-          copy target\release\${{ steps.bin.outputs.name }}.exe dist\
-          Compress-Archive -Path dist\* -DestinationPath "${{ env.APP_NAME }}-windows-x86_64.zip"
+          copy target\release\${{ steps.bin.outputs.name }}.exe "dist\Lilith Launcher.exe"
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-windows-x86_64
-          path: ${{ env.APP_NAME }}-windows-x86_64.zip
+          name: lilith-launcher-windows
+          path: dist/Lilith Launcher.exe
 
   release:
     needs: [build_macos, build_linux, build_windows]
