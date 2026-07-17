@@ -6,6 +6,7 @@ export component Popup {
     in-out property <string> title;
     in-out property <string> btn-text: "OK";
     in property <length> h_scaling:-200px;
+    in property <bool> second-btn:false;
     // in property <length> height;
     public function toggle-popup() {
         popup.is-open ? popup.close() : popup.show();
@@ -15,6 +16,7 @@ export component Popup {
     callback minimize-app();
     callback close-app();
 
+    callback second-btn-close();
     callback closing();
 
     popup := PopupWindow {
@@ -64,40 +66,84 @@ export component Popup {
 
                     @children
 
-                    Rectangle {
-                        close-error-btn := TouchArea {
-                            clicked => {
-                                popup.close();
-                                closing()
+                    HorizontalLayout {
+                        spacing: 8px;
+                        if root.second-btn: Rectangle {
+                            first-btn := TouchArea {
+                                clicked => {
+                                    popup.close();
+                                }
+
+                                pointer-event(event) => {
+                                    if (event.button == PointerEventButton.right && event.kind == PointerEventKind.up) {
+                                        second-btn-close();
+                                        popup.close();
+                                    }
+                                }
+                                mouse-cursor: pointer;
                             }
-                            mouse-cursor: pointer;
+
+                            width: parent.width / 2 -8px;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            background: first-btn.has-hover ? rgba(255, 32, 86, 100%) : rgba(255, 32, 86, 84%);
+                            border-color: rgb(259,99,126);
+
+
+                            animate background, border-color {
+                                easing: ease-in-out;
+                                duration: 150ms;
+                            }
+                            VerticalLayout {
+                                padding-top: 8px;
+                                padding-bottom: 8px;
+                                alignment: center;
+                                cross-axis-alignment: center;
+                                Text {
+                                    text: "Dismiss";
+                                    color: white;
+                                    font-weight: FontWeight.bold;
+                                    font-family: "Inter";
+                                    font-size: 1.5rem;
+                                }
+                            }
                         }
+                        Rectangle {
+                            second-btn := TouchArea {
+                                clicked => {
+                                    popup.close();
+                                    closing()
+                                }
+                                mouse-cursor: pointer;
+                            }
 
-                        width: 100%;
-                        border-radius: 8px;
-                        border-width: 1px;
-                        background: close-error-btn.has-hover ? rgba(255, 32, 86, 100%) : rgba(255, 32, 86, 84%);
-                        border-color: rgb(259,99,126);
+                            width: root.second-btn ? parent.width / 2 -8px : parent.width;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            background: second-btn.has-hover ? rgba(255, 32, 86, 100%) : rgba(255, 32, 86, 84%);
+                            border-color: rgb(259,99,126);
 
 
-                        animate background, border-color {
-                            easing: ease-in-out;
-                            duration: 150ms;
-                        }
-                        VerticalLayout {
-                            padding-top: 8px;
-                            padding-bottom: 8px;
-                            alignment: center;
-                            cross-axis-alignment: center;
-                            Text {
-                                text: btn-text;
-                                color: white;
-                                font-weight: FontWeight.bold;
-                                font-family: "Inter";
-                                font-size: 1.5rem;
+                            animate background, border-color {
+                                easing: ease-in-out;
+                                duration: 150ms;
+                            }
+                            VerticalLayout {
+                                padding-top: 8px;
+                                padding-bottom: 8px;
+                                alignment: center;
+                                cross-axis-alignment: center;
+                                Text {
+                                    text: btn-text;
+                                    color: white;
+                                    font-weight: FontWeight.bold;
+                                    font-family: "Inter";
+                                    font-size: 1.5rem;
+                                }
                             }
                         }
                     }
+
                 }
             }
         }
