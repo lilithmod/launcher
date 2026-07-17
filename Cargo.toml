@@ -1,6 +1,6 @@
 [package]
 name = "lilith-launcher"
-version = "5.0.0-rc.3"
+version = "5.0.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,7 +18,7 @@ slint = { version = "1.17.1", features = [
     "live-preview",
     "unstable-winit-030",
 ] }
-tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread"] }
+tokio = { version = "1.53.0", features = ["rt", "rt-multi-thread"] }
 dirs = "6.0.0"
 strip-ansi-escapes = "0.2.1"
 
@@ -48,12 +48,11 @@ icon = [
     "icon/icon-512.png",
     "icon/icon-1024.png",
 ]
-version = "5.0.0-rc.3"
+version = "5.0.0"
 copyright = "Copyright (c) 2026 Lilith"
 category = "public.app-category.developer-tools"
 short_description = "Lilith Launcher"
-long_description = "Lilith Launcher."
+long_description = "Lilith Launcher"
 
-# Linux .deb specific (also read by cargo-bundle)
 [package.metadata.bundle.deb]
 depends = ["libfontconfig1", "libxkbcommon0"]
